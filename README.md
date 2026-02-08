@@ -23,14 +23,14 @@ Arrow-first behavior:
 | --- | --- | --- | --- | --- |
 | `python-sql-connector` | Python | SQL Connector | Arrow Table | None |
 | `python-volume-download` | Python | Volume Parquet export + download | Arrow Table | `DATABRICKS_VOLUME_PATH` |
-| `python-adbc` | Python | ADBC | Arrow Table | `dbc install databricks` |
+| `python-adbc` | Python | ADBC | Arrow Table | Install `dbc`, then `dbc install databricks` |
 | `python-odbc` | Python | ODBC | `pandas` DataFrame | ODBC driver |
 | `python-jdbc` | Python | JDBC | `pandas` DataFrame | JDBC JAR + Java |
 | `python-sharing-client` | Python | Delta Sharing client | `pandas` DataFrame | `scripts/setup_external_clients.py` |
 | `python-sharing-client-hack` | Python | Delta Sharing + `delta_kernel_rust_sharing_wrapper` | Arrow Table | `scripts/setup_external_clients.py` |
 | `python-external-duckdb` | Python | DuckDB UC external access (`unity_catalog` + `delta`) | Arrow Table | `scripts/setup_external_clients.py` |
 | `r-brickster-sql` | R | Brickster SQL | Arrow Table | None |
-| `r-adbc` | R | ADBC | Arrow Table | `dbc install databricks` |
+| `r-adbc` | R | ADBC | Arrow Table | Install `dbc`, then `dbc install databricks` |
 | `r-odbc` | R | ODBC | `DBI` data frame (tibble-compatible) | ODBC driver |
 | `r-jdbc` | R | JDBC | `DBI` data frame (tibble-compatible) | JDBC JAR + Java |
 
@@ -44,13 +44,19 @@ Each runner has its own `README.md` under `runners/`.
 uv sync
 ```
 
-2. Install Databricks ADBC driver (for `python-adbc` and `r-adbc`):
+2. Install `dbc` CLI:
+
+```bash
+uv tool install dbc
+```
+
+3. Install Databricks ADBC driver (for `python-adbc` and `r-adbc`):
 
 ```bash
 dbc install databricks
 ```
 
-3. Download JDBC/ODBC drivers and print env var values:
+4. Download JDBC/ODBC drivers and print env var values:
 
 ```bash
 bash scripts/download_sql_drivers.sh
@@ -62,7 +68,7 @@ Optional (if you want to pass an ODBC package URL directly):
 DATABRICKS_ODBC_DOWNLOAD_URL='<driver-package-url>' bash scripts/download_sql_drivers.sh
 ```
 
-4. Copy env templates:
+5. Copy env templates:
 - `.env.example` -> `.env`
 - `.Renviron.example` -> `.Renviron`
 

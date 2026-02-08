@@ -40,6 +40,14 @@
     {
       "id": "wide_1000000",
       "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 1000000"
+    },
+    {
+      "id": "narrow_10000000",
+      "sql": "SELECT cs_order_number, cs_item_sk, cs_quantity, cs_sales_price, cs_net_paid, cs_net_profit FROM samples.tpcds_sf1000.catalog_sales LIMIT 10000000"
+    },
+    {
+      "id": "wide_10000000",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 10000000"
     }
   ]
 }

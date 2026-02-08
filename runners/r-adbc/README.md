@@ -10,7 +10,13 @@ Benchmarks Databricks fetch via ADBC from R (`adbcdrivermanager`) and returns Ar
 install.packages(c("adbcdrivermanager", "nanoarrow", "jsonlite", "microbenchmark", "fs", "purrr"))
 ```
 
-2. Install the Databricks ADBC driver:
+2. Install `dbc` CLI:
+
+```bash
+uv tool install dbc
+```
+
+3. Install the Databricks ADBC driver:
 
 ```bash
 dbc install databricks

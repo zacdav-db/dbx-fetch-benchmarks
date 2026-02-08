@@ -10,7 +10,13 @@ Benchmarks Databricks fetch via ADBC (`adbc_driver_manager`) and returns Arrow t
 uv sync
 ```
 
-2. Install the Databricks ADBC driver:
+2. Install `dbc` CLI:
+
+```bash
+uv tool install dbc
+```
+
+3. Install the Databricks ADBC driver:
 
 ```bash
 dbc install databricks
