@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "scenarios": [
+    {
+      "id": "select_1",
+      "sql": "SELECT 1 AS one"
+    },
+    {
+      "id": "wide_single_row",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 1"
+    },
+    {
+      "id": "narrow_1000",
+      "sql": "SELECT cs_order_number, cs_item_sk, cs_quantity, cs_sales_price, cs_net_paid, cs_net_profit FROM samples.tpcds_sf1000.catalog_sales LIMIT 1000"
+    },
+    {
+      "id": "wide_1000",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 1000"
+    },
+    {
+      "id": "narrow_10000",
+      "sql": "SELECT cs_order_number, cs_item_sk, cs_quantity, cs_sales_price, cs_net_paid, cs_net_profit FROM samples.tpcds_sf1000.catalog_sales LIMIT 10000"
+    },
+    {
+      "id": "wide_10000",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 10000"
+    },
+    {
+      "id": "narrow_100000",
+      "sql": "SELECT cs_order_number, cs_item_sk, cs_quantity, cs_sales_price, cs_net_paid, cs_net_profit FROM samples.tpcds_sf1000.catalog_sales LIMIT 100000"
+    },
+    {
+      "id": "wide_100000",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 100000"
+    },
+    {
+      "id": "narrow_1000000",
+      "sql": "SELECT cs_order_number, cs_item_sk, cs_quantity, cs_sales_price, cs_net_paid, cs_net_profit FROM samples.tpcds_sf1000.catalog_sales LIMIT 1000000"
+    },
+    {
+      "id": "wide_1000000",
+      "sql": "SELECT * FROM samples.tpcds_sf1000.catalog_sales LIMIT 1000000"
+    }
+  ]
+}

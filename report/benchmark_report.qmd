@@ -1,0 +1,217 @@
+---
+title: "Databricks Fetch Benchmark Report"
+format: html
+execute-dir: project
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+library(fs)
+library(jsonlite)
+library(purrr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(tibble)
+library(ggplot2)
+library(readr)
+```
+
+```{r}
+results_dir <- fs::path("results")
+json_files <- fs::dir_ls(
+  results_dir,
+  recurse = TRUE,
+  type = "file",
+  glob = "*.json"
+)
+
+if (length(json_files) == 0) {
+  stop("No result JSON files found under results/<client-id>/.")
+}
+
+value_or <- function(value, default) {
+  if (is.null(value)) default else value
+}
+
+normalize_results <- function(results) {
+  if (is.null(results) || !is.list(results)) {
+    return(list())
+  }
+
+  if (
+    !is.null(names(results)) &&
+      length(results) > 0 &&
+      all(nzchar(names(results)))
+  ) {
+    return(unname(results))
+  }
+
+  results
+}
+
+extract_iterations <- function(path) {
+  doc <- jsonlite::read_json(path, simplifyVector = FALSE)
+  scenarios <- normalize_results(doc$results)
+  client_id <- value_or(doc$client$id, fs::path_file(fs::path_dir(path)))
+  language <- value_or(doc$client$language, NA_character_)
+  repeats <- value_or(doc$parameters$repeats, NA_integer_)
+  run_file <- fs::path_file(path)
+  run_date <- stringr::str_extract(run_file, "\\d{8}")
+
+  purrr::map_dfr(scenarios, function(item) {
+    times <- as.numeric(value_or(item$times, numeric()))
+    if (length(times) == 0) {
+      return(tibble())
+    }
+
+    tibble(
+      file = as.character(path),
+      run_file = run_file,
+      run_date = run_date,
+      client_id = client_id,
+      language = language,
+      repeats = as.integer(repeats),
+      scenario_id = value_or(item$scenario$id, "unknown"),
+      query = value_or(item$scenario$query, ""),
+      iteration = seq_along(times),
+      seconds = times
+    )
+  })
+}
+
+iterations <- purrr::map_dfr(json_files, extract_iterations)
+
+iterations <- iterations %>%
+  mutate(
+    shape = case_when(
+      scenario_id == "select_1" ~ "scalar",
+      scenario_id == "wide_single_row" ~ "wide",
+      str_detect(scenario_id, "^narrow_\\d+$") ~ "narrow",
+      str_detect(scenario_id, "^wide_\\d+$") ~ "wide",
+      TRUE ~ "other"
+    ),
+    rows = case_when(
+      scenario_id %in% c("select_1", "wide_single_row") ~ 1L,
+      str_detect(scenario_id, "^(narrow|wide)_\\d+$") ~ as.integer(str_extract(
+        scenario_id,
+        "\\d+$"
+      )),
+      TRUE ~ NA_integer_
+    ),
+    rows_per_s = if_else(!is.na(rows) & rows > 0, rows / seconds, NA_real_)
+  )
+
+summary_tbl <- iterations %>%
+  group_by(client_id, language, scenario_id, shape, rows) %>%
+  summarise(
+    n = n(),
+    median_s = median(seconds),
+    p95_s = quantile(seconds, 0.95, names = FALSE, type = 7),
+    min_s = min(seconds),
+    max_s = max(seconds),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    rows_per_s = if_else(!is.na(rows) & rows > 0, rows / median_s, NA_real_)
+  )
+
+readr::write_csv(iterations, fs::path("results", "iterations.csv"))
+readr::write_csv(summary_tbl, fs::path("results", "summary.csv"))
+```
+
+## Inputs
+
+```{r}
+tibble(
+  files = length(json_files),
+  clients = dplyr::n_distinct(iterations$client_id),
+  scenarios = dplyr::n_distinct(iterations$scenario_id),
+  total_iterations = nrow(iterations)
+)
+```
+
+## Summary Table
+
+```{r}
+summary_tbl %>%
+  arrange(scenario_id, median_s) %>%
+  select(client_id, language, scenario_id, n, median_s, p95_s, rows_per_s)
+```
+
+## Median Time by Scenario
+
+```{r}
+summary_tbl %>%
+  ggplot(aes(
+    x = reorder(client_id, median_s),
+    y = median_s,
+    fill = client_id
+  )) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  facet_wrap(~scenario_id, scales = "free_y") +
+  labs(
+    title = "Median fetch time by scenario",
+    x = "Client",
+    y = "Median seconds"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## Throughput (Rows/sec)
+
+```{r}
+summary_tbl %>%
+  filter(shape %in% c("narrow", "wide"), !is.na(rows), !is.na(rows_per_s)) %>%
+  ggplot(aes(x = rows, y = rows_per_s, color = client_id, linetype = shape)) +
+  geom_line() +
+  geom_point(size = 2) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(
+    title = "Median throughput by result size",
+    x = "Rows returned (log scale)",
+    y = "Rows per second (log scale)",
+    color = "Client",
+    linetype = "Shape"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## Throughput Distribution (Boxplots)
+
+```{r}
+iterations %>%
+  filter(shape %in% c("narrow", "wide"), !is.na(rows), !is.na(rows_per_s)) %>%
+  ggplot(aes(x = factor(rows), y = rows_per_s, fill = client_id)) +
+  geom_boxplot(outlier_alpha = 0.2, position = position_dodge(width = 0.8)) +
+  facet_wrap(~shape, scales = "free_y") +
+  scale_y_log10() +
+  labs(
+    title = "Throughput distribution by result size",
+    x = "Rows returned",
+    y = "Rows per second (log scale)",
+    fill = "Client"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+## Scenario Distribution
+
+```{r}
+iterations %>%
+  ggplot(aes(x = client_id, y = seconds, fill = client_id)) +
+  geom_boxplot(outlier_alpha = 0.2, show.legend = FALSE) +
+  facet_wrap(~scenario_id, scales = "free") +
+  coord_flip() +
+  labs(
+    title = "Per-iteration timing distribution",
+    x = "Client",
+    y = "Seconds"
+  ) +
+  theme_minimal(base_size = 12)
+```

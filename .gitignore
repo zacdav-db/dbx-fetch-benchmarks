@@ -1,0 +1,25 @@
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.python-version
+.env
+.env.*
+!.env.example
+*.share
+secrets/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+.Renviron
+renv/library/
+
+# Results (raw JSON)
+results/*/*.json
+
+# Driver binaries
+drivers/
