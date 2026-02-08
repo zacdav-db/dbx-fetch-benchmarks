@@ -1,6 +1,9 @@
-# dbx-fetch-benchmark
+# Databricks Fetch Benchmarks
 
 Minimal benchmark suite for Databricks fetch performance across clients/languages.
+
+> [!IMPORTANT]
+> This isn't perfect, but hopefully its not way off. Contributions are welcome if theres a way to improve one of the methods.
 
 ## Dataset and scenarios
 
@@ -14,7 +17,7 @@ Minimal benchmark suite for Databricks fetch performance across clients/language
 
 Arrow-first behavior:
 - Runners that support Arrow return Arrow tables.
-- Runners without Arrow support return row frames (`pandas` DataFrames in Python, `DBI` data frames in R).
+- Runners without Arrow support return row frames (`pandas` `DataFrames` in Python, `data.frames`/`tibbles` in R).
 
 | Runner | Language | Method | Return type | Extra setup |
 | --- | --- | --- | --- | --- |
@@ -26,7 +29,7 @@ Arrow-first behavior:
 | `python-sharing-client` | Python | Delta Sharing client | `pandas` DataFrame | `scripts/setup_external_clients.py` |
 | `python-sharing-client-hack` | Python | Delta Sharing + `delta_kernel_rust_sharing_wrapper` | Arrow Table | `scripts/setup_external_clients.py` |
 | `python-external-duckdb` | Python | DuckDB UC external access (`unity_catalog` + `delta`) | Arrow Table | `scripts/setup_external_clients.py` |
-| `r-brickster-sql` | R | Brickster SQL | Arrow Table | Brickster package |
+| `r-brickster-sql` | R | Brickster SQL | Arrow Table | None |
 | `r-adbc` | R | ADBC | Arrow Table | `dbc install databricks` |
 | `r-odbc` | R | ODBC | `DBI` data frame (tibble-compatible) | ODBC driver |
 | `r-jdbc` | R | JDBC | `DBI` data frame (tibble-compatible) | JDBC JAR + Java |
